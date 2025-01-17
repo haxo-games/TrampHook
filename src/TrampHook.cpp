@@ -186,6 +186,7 @@ std::uint8_t TrampHook::getInstructionSize(std::uint8_t *p_opcode)
             if (*p_opcode >= 0x40 && *p_opcode <= 0x4F)
                 has_rex_prefix = true;
 #endif
+            break;
         }
 
         p_opcode++;

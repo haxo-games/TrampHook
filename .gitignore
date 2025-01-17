@@ -1,0 +1,17 @@
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.vs/
+out/
+CMakeFiles/
+CMakeCache.txt
+*.dir/
+Win32/
+x64/
+Debug/
+Release/
+*.lib
+*.dll
+*.exe
+*.pdb

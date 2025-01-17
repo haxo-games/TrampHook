@@ -25,8 +25,8 @@ git clone https://github.com/yourusername/TrampHook.git
 ```cpp
 #include <TrampHook/TrampHook.h>
 
-// Function to be hooked
-typedef int (*OriginalFunc)(int a, int b);
+// Function pointer for the function to be hooked
+using OriginalFunc = int (*__cdecl)(int a, int b);
 
 // Our detour function
 int DetourFunction(int a, int b) 

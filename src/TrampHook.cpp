@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <TrampHook/TrampHook.h>
 
+#include "opcodes.h"
+
 //
 // [SECTION] Variables & constants
 //
@@ -145,5 +147,106 @@ void TrampHook::unhookAll()
 
 std::uint8_t TrampHook::getInstructionSize(std::uint8_t *p_opcode)
 {
-    return 0;
+    if (p_opcode == nullptr)
+        return 0;
+
+    InstructionInfo info{opcodes[*p_opcode]};
+    std::uint8_t size{1}; // Base opcode byte
+
+    // Handle prefixes
+    bool has_operand_prefix{false};
+    bool has_address_prefix{false};
+#ifdef _WIN64
+    bool has_rex_prefix{false};
+#endif
+
+    while (info.type == INSTR_INVALID && (*p_opcode == 0x66 || *p_opcode == 0x67 ||
+#ifdef _WIN64
+                                          (*p_opcode >= 0x40 && *p_opcode <= 0x4F) ||
+#endif
+                                          *p_opcode == 0xF0 || *p_opcode == 0xF2 || *p_opcode == 0xF3))
+    {
+        switch (*p_opcode)
+        {
+        case 0x66:
+            has_operand_prefix = true;
+            break;
+        case 0x67:
+            has_address_prefix = true;
+            break;
+        case 0xF0:
+            break; // LOCK prefix
+        case 0xF2:
+            break; // REPNE/REPNZ prefix
+        case 0xF3:
+            break; // REP/REPE/REPZ prefix
+        default:
+#ifdef _WIN64
+            // REX prefixes (0x40-0x4F)
+            if (*p_opcode >= 0x40 && *p_opcode <= 0x4F)
+                has_rex_prefix = true;
+#endif
+        }
+
+        p_opcode++;
+        size++;
+        info = opcodes[*p_opcode];
+    }
+
+    if (info.type == INSTR_INVALID)
+        return 0;
+
+    if (info.type == INSTR_2BYTE)
+    {
+        p_opcode++;
+        size++;
+        info = opcodes[*p_opcode];
+
+        if (info.type == INSTR_INVALID)
+            return 0;
+    }
+
+    if (info.has_modrm)
+    {
+        std::uint8_t modrm{*(p_opcode + 1)};
+        size++;
+
+        std::uint8_t mod{static_cast<std::uint8_t>((modrm >> 6) & 0x3)};
+        std::uint8_t rm{static_cast<std::uint8_t>(modrm & 0x7)};
+
+        if (rm == 0x4 && mod != 0x3)
+            size++;
+
+        // Handle displacement
+        if (mod == 0x1)
+            size++;
+        else if (mod == 0x2)
+            size += 4;
+        else if (mod == 0x0 && rm == 0x5)
+            size += 4;
+    }
+
+    // Add immediate size
+    switch (info.imm_size)
+    {
+    case IMM_8:
+        size += 1;
+        break;
+    case IMM_16:
+        size += 2;
+        break;
+    case IMM_32:
+        size += 4;
+        break;
+#ifdef _WIN64
+    case IMM_64:
+        size += 8;
+        break;
+#endif
+    case IMM_16_8:
+        size += 3;
+        break;
+    }
+
+    return size;
 }

@@ -6,6 +6,16 @@
 // [SECTION] Types & defines
 //
 
+#define SIMPLE(type) {type, 0, IMM_NONE, 0, 0}
+#define WITH_MODRM(type) {type, 1, IMM_NONE, 0, 0}
+#define WITH_IMM8(type) {type, 0, IMM_8, 0, 0}
+#define WITH_IMM32(type) {type, 0, IMM_32, 0, 0}
+#define WITH_MODRM_IMM8(type) {type, 1, IMM_8, 0, 0}
+#define WITH_MODRM_IMM32(type) {type, 1, IMM_32, 0, 0}
+#define INVALID {INSTR_INVALID, 0, IMM_NONE, 0, 0}
+#define WITH_IMM16(type) {type, 0, IMM_16, 0, 0}
+#define WITH_IMM16_IMM8(type) {type, 0, IMM_16_8, 0, 0}
+
 enum InstructionType : std::uint8_t
 {
     INSTR_INVALID = 0,
@@ -28,16 +38,6 @@ enum ImmediateSize : std::uint8_t
     IMM_16_8
 };
 
-#define SIMPLE(type) {type, 0, IMM_NONE, 0, 0}
-#define WITH_MODRM(type) {type, 1, IMM_NONE, 0, 0}
-#define WITH_IMM8(type) {type, 0, IMM_8, 0, 0}
-#define WITH_IMM32(type) {type, 0, IMM_32, 0, 0}
-#define WITH_MODRM_IMM8(type) {type, 1, IMM_8, 0, 0}
-#define WITH_MODRM_IMM32(type) {type, 1, IMM_32, 0, 0}
-#define INVALID {INSTR_INVALID, 0, IMM_NONE, 0, 0}
-#define WITH_IMM16(type) {type, 0, IMM_16, 0, 0}
-#define WITH_IMM16_IMM8(type) {type, 0, IMM_16_8, 0, 0}
-
 struct InstructionInfo
 {
     std::uint8_t type;
@@ -51,7 +51,7 @@ struct InstructionInfo
 // [SECTION] Variables
 //
 
-const InstructionInfo opcodes[256] =
+inline const InstructionInfo opcodes[256] =
     {
         // 0x00-0x0F: Arithmetic and two-byte instructions
         WITH_MODRM(INSTR_ARITHMETIC),     // 00 - ADD r/m8, r8

@@ -59,11 +59,13 @@ void *TrampHook::hook(void *p_target, void *p_detour)
 
 #if _WIN64
     // MOV RAX, p_normal_code
-    *(uint16_t *)p_jump_back = 0x48B8;
+    *(uint8_t *)p_jump_back = 0x48;
+    *(uint8_t *)((uint8_t *)p_jump_back + 1) = 0xB8;
     *(uint64_t *)(p_jump_back + 2) = (uint64_t)p_normal_code;
 
     // JMP RAX
-    *(uint16_t *)(p_jump_back + 10) = 0xFFE0;
+    *(uint8_t *)(p_jump_back + 10) = 0xFF;
+    *(uint8_t *)(p_jump_back + 11) = 0xE0;
 #else
     uint32_t relative_jmp_address{(uintptr_t)p_normal_code - (uint32_t)(p_jump_back + minimum_hook_size)};
 
@@ -73,16 +75,20 @@ void *TrampHook::hook(void *p_target, void *p_detour)
 #endif
 
     DWORD old_protect;
-    VirtualProtect(p_target, total_size_to_overwrite, PAGE_EXECUTE_READWRITE, &old_protect);
+    if (!VirtualProtect(p_target, total_size_to_overwrite, PAGE_EXECUTE_READWRITE, &old_protect))
+        return nullptr;
+
     memset(p_target, '\x90', total_size_to_overwrite);
 
 #if _WIN64
     // MOV RAX, p_detour
-    *(uint16_t *)p_target = 0x48B8;
+    *(uint8_t *)p_target = 0x48;
+    *(uint8_t *)((uint8_t *)p_target + 1) = 0xB8;
     *(uint64_t *)((uint8_t *)p_target + 2) = (uint64_t)p_detour;
 
     // JMP RAX
-    *(uint16_t *)(p_jump_back + 10) = 0xFFE0;
+    *(uint8_t *)((uint8_t *)p_target + 10) = 0xFF;
+    *(uint8_t *)((uint8_t *)p_target + 11) = 0xE0;
 #else
     *(uint8_t *)(p_target) = 0xE9;
     *(int32_t *)((uint8_t *)p_target + 1) = (int32_t)((uint8_t *)p_detour - ((uint8_t *)p_target + 5));

@@ -68,7 +68,6 @@ int main()
 ```cpp
 namespace TrampHook 
 {
-public:
     // Hook a function, returns trampoline pointer or nullptr on failure
     void* hook(void* target, void* detour);
     

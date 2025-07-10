@@ -27,8 +27,7 @@ void *TrampHook::hook(void *p_target, void *p_detour)
         return nullptr;
 
     /* Check that the function isn't already hooked */
-    auto it = hooked_functions.find((uintptr_t)p_target);
-    if (it != hooked_functions.end())
+    if (auto it{hooked_functions.find(reinterpret_cast<std::uintptr_t>(p_target))}; it != hooked_functions.end())
         return it->second.p_trampoline;
 
     Hook hook;

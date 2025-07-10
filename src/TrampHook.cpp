@@ -27,8 +27,8 @@ void *TrampHook::hook(void *p_target, void *p_detour)
         return nullptr;
 
     /* Check that the function isn't already hooked */
-    if (hooked_functions.find(reinterpret_cast<std::uintptr_t>(p_target)) != hooked_functions.end())
-        return nullptr;
+    if (auto it{hooked_functions.find(reinterpret_cast<std::uintptr_t>(p_target))}; it != hooked_functions.end())
+        return it->second.p_trampoline;
 
     Hook hook;
     uint8_t total_size_to_overwrite{};
